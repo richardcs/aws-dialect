@@ -1,0 +1,9 @@
+templateDirectory=/Users/richardlevenberg/dvp/ssov2/templates/
+widgetList=SsoLoginWidget1,GuestLoginWidget
+breezeAdminUsername=[#aws:ps key="${'/Prod/SSO/' + name + '/breeze.login'}" /]
+breezeAdminPassword=[#aws:sm key="${'/Prod/SSO/' + name + '/breeze.pass'}" /]
+
+[SsoLoginWidget1]
+relyingPartyRepository=com.cosocloud.ssov2.relyingparty.repository.FromMetadata
+metadataLocation=file:////Users/richardlevenberg/dvp/ssov2/metadata/metadata.xml
+

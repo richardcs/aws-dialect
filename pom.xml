@@ -239,6 +239,7 @@
 				</configuration>
 			</plugin>
 		</plugins>
+		<finalName>aws-dialect</finalName>
 	</build>
 
 </project>
