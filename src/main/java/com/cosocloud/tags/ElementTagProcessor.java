@@ -2,11 +2,14 @@ package com.cosocloud.tags;
 
 import org.thymeleaf.processor.element.AbstractElementTagProcessor;
 import org.thymeleaf.templatemode.TemplateMode;
+import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.engine.AttributeName;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.processor.element.IElementTagStructureHandler;
-
+import org.thymeleaf.standard.expression.IStandardExpression;
+import org.thymeleaf.standard.expression.IStandardExpressionParser;
+import org.thymeleaf.standard.expression.StandardExpressions;
 import org.unbescape.html.HtmlEscape;
 
 import org.slf4j.Logger;
@@ -34,5 +37,11 @@ public class ElementTagProcessor extends AbstractElementTagProcessor {
     protected void doProcess(final ITemplateContext context, final IProcessableElementTag tag, final IElementTagStructureHandler structureHandler) {
         logger.debug(String.format("tag: %s", tag));
         //structureHandler.setBody("Hello, " + HtmlEscape.escapeHtml5(tag) + "!", false);
+        final IEngineConfiguration configuration = context.getConfiguration();
+        final IStandardExpressionParser parser = StandardExpressions.getExpressionParser(configuration);
+        final IStandardExpression expression = parser.parseExpression(context, tag.getAttributeValue("key"));
+        final String secretName = (String)expression.execute(context);
+        logger.debug(secretName);
+        structureHandler.replaceWith(secretName, false);
     }
 }

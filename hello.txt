@@ -1,1 +1,1 @@
-[#test:element]hello[/test:element]
+[#test:element key="${'/Prod/SSO/' + name + '/breeze.login'}"][/test:element]
