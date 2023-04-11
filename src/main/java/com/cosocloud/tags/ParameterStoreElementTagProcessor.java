@@ -60,6 +60,7 @@ public class ParameterStoreElementTagProcessor extends AbstractElementTagProcess
         try {
             GetParameterRequest parameterRequest = GetParameterRequest.builder()
                 .name(paraName)
+                .withDecryption(true)
                 .build();
 
             GetParameterResponse parameterResponse = ssmClient.getParameter(parameterRequest);
