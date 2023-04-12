@@ -14,6 +14,7 @@ import org.thymeleaf.standard.expression.*;
 import org.unbescape.html.HtmlEscape;
 
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
@@ -51,15 +52,16 @@ public class ParameterStoreElementTagProcessor extends AbstractElementTagProcess
         final String paraName = (String)expression.execute(context);
         logger.debug(paraName);
 
-        Region region = Region.US_EAST_1;
+        Region region = Region.of(System.getenv("AWS_REGION"));
         SsmClient ssmClient = SsmClient.builder()
             .region(region)
-            .credentialsProvider(ProfileCredentialsProvider.create("commercial"))
+            .credentialsProvider(DefaultCredentialsProvider.create())
             .build();
 
         try {
             GetParameterRequest parameterRequest = GetParameterRequest.builder()
                 .name(paraName)
+                .withDecryption(true)
                 .build();
 
             GetParameterResponse parameterResponse = ssmClient.getParameter(parameterRequest);

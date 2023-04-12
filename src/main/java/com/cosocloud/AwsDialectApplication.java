@@ -28,17 +28,12 @@ public class AwsDialectApplication {
         templateEngine.addDialect(new AWSDialect());
 
         Context context = new Context();
-        context.setVariable("name", System.getProperty("name"));
-
-        for (int i = 0; i < args.length; i++) {
-            String output = templateEngine.process(args[i], context);
-            //System.out.println("=============================");
-            //System.out.println("Output for File:"+(i+1));
-            //System.out.println("=============================");
-            System.out.println(output);
-            //System.out.println("\n\n\n\n");
+        for (String propertyName : System.getProperties().stringPropertyNames()) {
+            context.setVariable(propertyName, System.getProperty(propertyName));
         }
 
+        String output = templateEngine.process(args[0], context);
+        System.out.println(output);
 
         SpringApplication.exit(ctx, ()-> 0);
     }
