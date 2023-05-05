@@ -24,12 +24,12 @@ import software.amazon.awssdk.services.secretsmanager.model.SecretsManagerExcept
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SecretManagerElementTagProcessor extends AbstractElementTagProcessor {
+public class SecretManagerElementTagProcessor extends CachingAbstractElementTagProcessor {
     private static final String TAG_NAME = "sm";
     private static final int PRECEDENCE = 2000;
 
     private static Logger logger = LoggerFactory.getLogger(SecretManagerElementTagProcessor.class);
-    
+
     public SecretManagerElementTagProcessor(final String dialectPrefix) {
         super(
             TemplateMode.TEXT, // This processor will apply only to TEXT mode
@@ -52,24 +52,31 @@ public class SecretManagerElementTagProcessor extends AbstractElementTagProcesso
         final String secretName = (String)expression.execute(context);
         logger.debug(secretName);
 
-        Region region = Region.of(System.getenv("AWS_REGION"));
-        SecretsManagerClient secretsClient = SecretsManagerClient.builder()
-            .region(region)
-            .credentialsProvider(DefaultCredentialsProvider.create())
-            .build();
-        
-        try {
-            GetSecretValueRequest valueRequest = GetSecretValueRequest.builder()
-                .secretId(secretName)
+        // see if its cached already
+        String cached = cache.get(secretName);
+        if (cached != null) {
+            structureHandler.replaceWith(cached, false);
+        } else {
+            Region region = Region.of(System.getenv("AWS_REGION"));
+            SecretsManagerClient secretsClient = SecretsManagerClient.builder()
+                .region(region)
+                .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();
+        
+            try {
+                GetSecretValueRequest valueRequest = GetSecretValueRequest.builder()
+                    .secretId(secretName)
+                    .build();
 
-            GetSecretValueResponse valueResponse = secretsClient.getSecretValue(valueRequest);
-            String secret = valueResponse.secretString();
-            logger.debug(secret);
-            structureHandler.replaceWith(secret, false);
-        } catch (SecretsManagerException e) {
-            logger.error(e.awsErrorDetails().errorMessage(), e);
+                GetSecretValueResponse valueResponse = secretsClient.getSecretValue(valueRequest);
+                String secret = valueResponse.secretString();
+                logger.debug(secret);
+                cache.put(secretName, secret);
+                structureHandler.replaceWith(secret, false);
+            } catch (SecretsManagerException e) {
+                logger.error(e.awsErrorDetails().errorMessage(), e);
+            }
+            secretsClient.close();
         }
-        secretsClient.close();
     }
 }

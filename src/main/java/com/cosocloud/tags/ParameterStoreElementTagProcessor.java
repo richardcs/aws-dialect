@@ -24,7 +24,7 @@ import software.amazon.awssdk.services.ssm.model.SsmException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ParameterStoreElementTagProcessor extends AbstractElementTagProcessor {
+public class ParameterStoreElementTagProcessor extends CachingAbstractElementTagProcessor {
     private static final String TAG_NAME = "ps";
     private static final int PRECEDENCE = 2000;
 
@@ -49,27 +49,35 @@ public class ParameterStoreElementTagProcessor extends AbstractElementTagProcess
         final IEngineConfiguration configuration = context.getConfiguration();
         final IStandardExpressionParser parser = StandardExpressions.getExpressionParser(configuration);
         final IStandardExpression expression = parser.parseExpression(context, tag.getAttributeValue("key"));
-        final String paraName = (String)expression.execute(context);
-        logger.debug(paraName);
+        final String paramName = (String)expression.execute(context);
+        logger.debug(paramName);
 
-        Region region = Region.of(System.getenv("AWS_REGION"));
-        SsmClient ssmClient = SsmClient.builder()
-            .region(region)
-            .credentialsProvider(DefaultCredentialsProvider.create())
-            .build();
-
-        try {
-            GetParameterRequest parameterRequest = GetParameterRequest.builder()
-                .name(paraName)
-                .withDecryption(true)
+        String cached = cache.get(paramName);
+        if (cached != null) {
+            logger.debug("got value from cache " + cached);
+            structureHandler.replaceWith(cached, false);
+        } else {
+            Region region = Region.of(System.getenv("AWS_REGION"));
+            SsmClient ssmClient = SsmClient.builder()
+                .region(region)
+                .credentialsProvider(DefaultCredentialsProvider.create())
                 .build();
 
-            GetParameterResponse parameterResponse = ssmClient.getParameter(parameterRequest);
-            logger.debug("The parameter value is "+parameterResponse.parameter().value());
-            structureHandler.replaceWith(parameterResponse.parameter().value(), false);
-        } catch (SsmException e) {
-            logger.error(e.getMessage(), e);
+            try {
+                GetParameterRequest parameterRequest = GetParameterRequest.builder()
+                    .name(paramName)
+                    .withDecryption(true)
+                    .build();
+
+                GetParameterResponse parameterResponse = ssmClient.getParameter(parameterRequest);
+                String parameter = parameterResponse.parameter().value();
+                logger.debug("The parameter value is " + parameter);
+                cache.put(paramName, parameter);
+                structureHandler.replaceWith(parameter, false);
+            } catch (SsmException e) {
+                logger.error(e.getMessage(), e);
+            }
+            ssmClient.close();
         }
-        ssmClient.close();
     }
 }
