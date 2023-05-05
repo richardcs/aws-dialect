@@ -3,8 +3,10 @@ package com.cosocloud;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.Banner;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
+
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templatemode.TemplateMode;
@@ -17,7 +19,7 @@ import com.cosocloud.dialect.TestDialect;
 public class AwsDialectApplication {
 
 	public static void main(String[] args) {
-		ConfigurableApplicationContext ctx = new SpringApplicationBuilder(AwsDialectApplication.class).bannerMode(Banner.Mode.OFF).run(args);
+		ConfigurableApplicationContext ctx = new SpringApplicationBuilder(AwsDialectApplication.class).bannerMode(Banner.Mode.OFF).web(WebApplicationType.NONE).run(args);
         TemplateEngine templateEngine = new TemplateEngine();
         FileTemplateResolver fileTemplateResolver = new FileTemplateResolver();
         // uncomment these to run in local
